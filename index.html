@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>CYBERPUNK ULTIMATE CPS</title>
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:#000814;
+    color:#00ffff;
+    text-align:center;
+    overflow:hidden;
+    perspective:800px;
+}
+
+/* 3D neon grid */
+.grid{
+    position:fixed;
+    bottom:-200px;
+    width:200%;
+    height:400px;
+    background:
+        linear-gradient(#0ff 1px, transparent 1px),
+        linear-gradient(90deg, #0ff 1px, transparent 1px);
+    background-size:40px 40px;
+    transform:rotateX(75deg);
+    animation:gridMove 8s linear infinite;
+    opacity:0.2;
+    z-index:-2;
+}
+@keyframes gridMove{
+    from{background-position:0 0;}
+    to{background-position:0 40px;}
+}
+
+h1{
+    margin-top:15px;
+    text-shadow:0 0 20px #ff00ff,0 0 40px #00ffff;
+}
+
+/* RGB click box */
+#clickArea{
+    position:relative;
+    width:320px;
+    height:220px;
+    margin:30px auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    border-radius:15px;
+    background:#111;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+#clickArea::before{
+    content:"";
+    position:absolute;
+    inset:-4px;
+    border-radius:18px;
+    background:linear-gradient(45deg,red,orange,yellow,green,cyan,blue,violet,red);
+    background-size:400%;
+    animation:rgb 6s linear infinite;
+    z-index:-1;
+}
+@keyframes rgb{
+    0%{background-position:0%}
+    100%{background-position:400%}
+}
+
+/* Rage */
+.rage{
+    box-shadow:0 0 40px red;
+}
+
+/* Lightning flash */
+.flash{
+    animation:flash 0.2s;
+}
+@keyframes flash{
+    0%{background:white;}
+    100%{background:#000814;}
+}
+
+button{
+    padding:6px 14px;
+    margin:5px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+#rank,#achievements{
+    margin-top:10px;
+    font-size:18px;
+}
+</style>
+</head>
+<body>
+
+<div class="grid"></div>
+
+<h1>⚡ CYBERPUNK ULTIMATE ⚡</h1>
+
+<div>
+<button onclick="setMode(5)">5s</button>
+<button onclick="setMode(10)">10s</button>
+<button onclick="setMode(30)">30s</button>
+</div>
+
+<div id="clickArea">CLICK FAST</div>
+
+<div>
+Time: <span id="time">5</span>s |
+Clicks: <span id="clicks">0</span> |
+CPS: <span id="cps">0</span>
+</div>
+
+<div id="rank">🏆 Rank: Bronze</div>
+<div id="achievements">🎮 Achievements: None</div>
+
+<button onclick="restart()">Restart</button>
+
+<audio id="clickSound">
+<source src="https://www.soundjay.com/buttons/sounds/button-16.mp3">
+</audio>
+
+<audio id="bgMusic" loop>
+<source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8e6c0e09c.mp3">
+</audio>
+
+<audio id="bossMusic" loop>
+<source src="https://cdn.pixabay.com/download/audio/2021/11/09/audio_3d4b2b5c68.mp3">
+</audio>
+
+<script>
+let clicks=0,timeLeft=5,selectedMode=5,timer=null;
+let rage=false;
+let achievements=[];
+
+const clickArea=document.getElementById("clickArea");
+const clickSound=document.getElementById("clickSound");
+const bossMusic=document.getElementById("bossMusic");
+const bgMusic=document.getElementById("bgMusic");
+const rankDisplay=document.getElementById("rank");
+const achDisplay=document.getElementById("achievements");
+
+bgMusic.play();
+
+function setMode(sec){
+selectedMode=sec;
+timeLeft=sec;
+document.getElementById("time").textContent=sec;
+}
+
+clickArea.addEventListener("click",()=>{
+if(timeLeft<=0)return;
+
+clicks++;
+document.getElementById("clicks").textContent=clicks;
+clickSound.currentTime=0;
+clickSound.play();
+
+if(!timer) startGame();
+});
+
+function startGame(){
+timer=setInterval(()=>{
+timeLeft--;
+document.getElementById("time").textContent=timeLeft;
+
+if(timeLeft<=0){
+clearInterval(timer);
+timer=null;
+let cps=(clicks/selectedMode).toFixed(2);
+document.getElementById("cps").textContent=cps;
+updateRank(cps);
+checkAchievements(cps);
+}
+},1000);
+}
+
+function updateRank(cps){
+let rank="Bronze";
+if(cps>=5) rank="Silver";
+if(cps>=7) rank="Gold";
+if(cps>=9) rank="Diamond";
+if(cps>=12) rank="GOD";
+
+rankDisplay.textContent="🏆 Rank: "+rank;
+
+if(cps>10){
+activateRage();
+}
+
+if(rank==="GOD"){
+document.body.classList.add("flash");
+setTimeout(()=>document.body.classList.remove("flash"),200);
+}
+}
+
+function activateRage(){
+if(!rage){
+rage=true;
+clickArea.classList.add("rage");
+bgMusic.pause();
+bossMusic.play();
+}
+}
+
+function checkAchievements(cps){
+if(cps>=5 && !achievements.includes("Speedster")){
+achievements.push("Speedster ⚡");
+}
+if(cps>=10 && !achievements.includes("Click Master")){
+achievements.push("Click Master 🔥");
+}
+if(cps>=12 && !achievements.includes("GOD Mode")){
+achievements.push("GOD Mode 👑");
+}
+achDisplay.textContent="🎮 Achievements: "+(achievements.join(", ")||"None");
+}
+
+function restart(){
+clearInterval(timer);
+timer=null;
+clicks=0;
+timeLeft=selectedMode;
+rage=false;
+document.getElementById("clicks").textContent=0;
+document.getElementById("time").textContent=selectedMode;
+document.getElementById("cps").textContent=0;
+clickArea.classList.remove("rage");
+bossMusic.pause();
+bgMusic.play();
+}
+</script>
+
+</body>
+</html>
